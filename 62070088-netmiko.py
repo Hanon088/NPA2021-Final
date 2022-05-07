@@ -1,3 +1,4 @@
+import re
 from netmiko import ConnectHandler
 
 def getDataFromDevice(params, command):
@@ -7,11 +8,42 @@ def getDataFromDevice(params, command):
         return result
 
 def checkForInterface(params, interfaceName):
-    """Check if interface exists"""
+    """Check if interface exists, return True if it does"""
     return getDataFromDevice(params, f"sh ip int br | include {interfaceName}") != ""
 
-def createLoopback(params, loopbackNumber):
+def getInterfaceIP(params, interfaceName):
+    """Get ip address of interface"""
+    command = f"sh ip int {interfaceName} | include Internet address"
+    result = getDataFromDevice(params, command)
+    ipAddr = re.search("\d+\.\d+\.\d+\.\d+", result).group()
+    subnetMask = re.search("/\d+$", result)
+    return (ipAddr, subnetMask)
+
+def createLoopback(params, loopbackNumber, ipAddr, subnetMask):
     """Create loopback interface with loopbackNumber"""
+    interfaceExists = checkForInterface(params, f"Loopback{loopbackNumber}")
+    interfaceAddr = getInterfaceIP(params, f"Loopback{loopbackNumber}")
+    integerForm = "/" + sum([bin(int(i)).count("1") for i in subnetMask.split(".")])
+    #if interfaceAddr[0] != ipAddr or interfaceAddr[1] != integerForm:
+       # deleteLoopback(params, loopbackNumber)
+    if not interfaceExists:
+        with ConnectHandler(**params) as ssh:
+            ssh.send_config_set([f"int loop {loopbackNumber}", f"ip addr {ipAddr} {subnetMask}"])
+        return f"Loopback{loopbackNumber} created"
+    return f"Loopback{loopbackNumber} already exists"
+
 
 def deleteLoopback(params, loopbackNumber):
     """Delete loopback interface with loopbackNumber"""
+
+    
+if __name__ == '__main__':
+    device_ip = "10.0.15.103"
+    username = "admin"
+    password = "cisco"
+
+    device_params = {"device_type": "cisco_ios",
+                    "ip": device_ip,
+                    "username": username,
+                    "password": password
+                    }
