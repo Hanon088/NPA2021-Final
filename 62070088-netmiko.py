@@ -1,4 +1,6 @@
+from cgitb import reset
 import re
+from unittest import result
 from netmiko import ConnectHandler
 
 def getDataFromDevice(params, command):
@@ -36,6 +38,12 @@ def createLoopback(params, loopbackNumber, ipAddr, subnetMask):
 
 def deleteLoopback(params, loopbackNumber):
     """Delete loopback interface with loopbackNumber"""
+    interfaceExists = checkForInterface(params, f"Loopback{loopbackNumber}")
+    if interfaceExists:
+        with ConnectHandler(**params) as ssh:
+            ssh.send_config_set([f"no int loop {loopbackNumber}"])
+        return f"Loopback{loopbackNumber} deleted"
+    return f"Loopback{loopbackNumber} does not exist"
 
     
 if __name__ == '__main__':
@@ -49,5 +57,6 @@ if __name__ == '__main__':
                     "password": password
                     }
 
-    result = createLoopback(device_params, 62070088, "192.168.1.1", "255.255.255.0")
+    #result = createLoopback(device_params, 62070088, "192.168.1.1", "255.255.255.0")
+    result = deleteLoopback(device_params, 62070088)
     print(result)
