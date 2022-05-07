@@ -22,10 +22,11 @@ def getInterfaceIP(params, interfaceName):
 def createLoopback(params, loopbackNumber, ipAddr, subnetMask):
     """Create loopback interface with loopbackNumber"""
     interfaceExists = checkForInterface(params, f"Loopback{loopbackNumber}")
-    interfaceAddr = getInterfaceIP(params, f"Loopback{loopbackNumber}")
-    integerForm = "/" + sum([bin(int(i)).count("1") for i in subnetMask.split(".")])
-    #if interfaceAddr[0] != ipAddr or interfaceAddr[1] != integerForm:
-       # deleteLoopback(params, loopbackNumber)
+    if interfaceExists:
+        interfaceAddr = getInterfaceIP(params, f"Loopback{loopbackNumber}")
+        integerForm = "/" + sum([bin(int(i)).count("1") for i in subnetMask.split(".")])
+        #if interfaceAddr[0] != ipAddr or interfaceAddr[1] != integerForm:
+           # deleteLoopback(params, loopbackNumber)
     if not interfaceExists:
         with ConnectHandler(**params) as ssh:
             ssh.send_config_set([f"int loop {loopbackNumber}", f"ip addr {ipAddr} {subnetMask}"])
@@ -47,3 +48,6 @@ if __name__ == '__main__':
                     "username": username,
                     "password": password
                     }
+
+    result = createLoopback(device_params, 62070088, "192.168.1.1", "255.255.255.0")
+    print(result)
