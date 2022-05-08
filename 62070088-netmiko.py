@@ -16,7 +16,7 @@ def getInterfaceIP(params, interfaceName):
     command = f"sh ip int {interfaceName} | include Internet address"
     result = getDataFromDevice(params, command)
     ipAddr = re.search("\d+\.\d+\.\d+\.\d+", result).group()
-    subnetMask = re.search("/\d+$", result)
+    subnetMask = re.search("/\d+$", result).group()
     return (ipAddr, subnetMask)
 
 def createLoopback(params, loopbackNumber, ipAddr, subnetMask):
@@ -26,8 +26,8 @@ def createLoopback(params, loopbackNumber, ipAddr, subnetMask):
         interfaceAddr = getInterfaceIP(params, f"Loopback{loopbackNumber}")
         integerForm = "/" + str(sum([bin(int(i)).count("1") for i in subnetMask.split(".")]))
         if interfaceAddr[0] != ipAddr or interfaceAddr[1] != integerForm:
-           deleteLoopback(params, loopbackNumber)
-           interfaceExists = False
+            deleteLoopback(params, loopbackNumber)
+            interfaceExists = False
     if not interfaceExists:
         with ConnectHandler(**params) as ssh:
             ssh.send_config_set([f"int loop {loopbackNumber}", f"ip addr {ipAddr} {subnetMask}"])
