@@ -60,15 +60,16 @@ def setInterfaceStatus(deviceIp, interfaceName, ipAddr, mask, enabled):
     yangSetLoopback = {
     "ietf-interfaces:interface": {
         "name": interfaceName,
-        "description": "",
         "type": "iana-if-type:softwareLoopback",
         "enabled": enabled
     }
    }
     setResp = requests.put(setInterfaceURL, data=json.dumps(yangSetLoopback), auth=basicauth, headers=headers, verify=False)
-    return setResp.json()
+    if(setResp.status_code >= 200 and setResp.status_code <= 299):
+       return True
+    return False
 
-"""while True:
+while True:
     latestMessage = getLatestMessage()
     print(f"Recieved Message: {latestMessage}")
     if latestMessage == "62070088":
@@ -78,11 +79,10 @@ def setInterfaceStatus(deviceIp, interfaceName, ipAddr, mask, enabled):
             continue
         if not interfaceUp:
             postMessage("Loopback62070088 - Operational status is down")
-            setInterfaceStatus("10.0.15.103", "Loopback62070088", True)
+            setInterfaceStatus("10.0.15.103", "Loopback62070088", "192.168.1.1", "255.255.255.0", True)
         interfaceUp = getInterfaceStatus("10.0.15.103", "Loopback62070088")
         if not interfaceUp:
             postMessage("Enable Loopback62070088 - Now the Operational status is still down")
         else:
             postMessage("Enable Loopback62070088 - Now the Operational status is up again")
-    time.sleep(1)"""
-print(setInterfaceStatus("10.0.15.103", "Loopback62070088", "192.168.1.1", "255.255.255.0", True))
+    time.sleep(1)
