@@ -17,11 +17,11 @@ def getInterfaceStatus(deviceIp, interfaceName):
     interfaceJSON = getResp.json()
     interfaceData = list(filter(lambda x: interfaceName in x["name"] ,interfaceJSON["ietf-interfaces:interfaces"]["interface"]))
     if interfaceData == []:
-        return(f"{interfaceName} - Operational status is down")
+        return False
     interfaceData = json.loads(json.dumps(interfaceData[0]))
     if interfaceData["enabled"]:
-        return(f"{interfaceName} - Operational status is up")
-    return(f"{interfaceName} - Operational status is down")
+        return True
+    return False
 
 
 def getLatestMessage():
@@ -49,10 +49,40 @@ def postMessage(messageContent):
     postResp = postResp.json()
     return postResp
 
+def setInterfaceStatus(deviceIp, interfaceName, ipAddr, mask, enabled):
+    """Set interface status of interfaceName of deviceIp"""
+    setInterfaceURL = f"https://{deviceIp}/restconf/data/ietf-interfaces:interfaces/interface={interfaceName}"
+    headers = { "Accept": "application/yang-data+json", 
+            "Content-type":"application/yang-data+json"
+           }
+    basicauth = ("admin", "cisco")
 
-while True:
+    yangSetLoopback = {
+    "ietf-interfaces:interface": {
+        "name": interfaceName,
+        "description": "",
+        "type": "iana-if-type:softwareLoopback",
+        "enabled": enabled
+    }
+   }
+    setResp = requests.put(setInterfaceURL, data=json.dumps(yangSetLoopback), auth=basicauth, headers=headers, verify=False)
+    return setResp.json()
+
+"""while True:
     latestMessage = getLatestMessage()
     print(f"Recieved Message: {latestMessage}")
     if latestMessage == "62070088":
-        postMessage(getInterfaceStatus("10.0.15.103", "Loopback62070088"))
-    time.sleep(1)
+        interfaceUp = getInterfaceStatus("10.0.15.103", "Loopback62070088")
+        if interfaceUp:
+            postMessage("Loopback62070088 - Operational status is up")
+            continue
+        if not interfaceUp:
+            postMessage("Loopback62070088 - Operational status is down")
+            setInterfaceStatus("10.0.15.103", "Loopback62070088", True)
+        interfaceUp = getInterfaceStatus("10.0.15.103", "Loopback62070088")
+        if not interfaceUp:
+            postMessage("Enable Loopback62070088 - Now the Operational status is still down")
+        else:
+            postMessage("Enable Loopback62070088 - Now the Operational status is up again")
+    time.sleep(1)"""
+print(setInterfaceStatus("10.0.15.103", "Loopback62070088", "192.168.1.1", "255.255.255.0", True))
