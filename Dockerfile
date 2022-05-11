@@ -4,9 +4,10 @@ WORKDIR /npa
 
 COPY 62070088-bot.py .
 COPY 62070088-netmiko.py .
-COPY keyfile .
+COPY keyfile.py .
+COPY requirement.txt .
 
-RUN pip install requirement.txt
+RUN pip install -r requirement.txt
 
 COPY . .
 
